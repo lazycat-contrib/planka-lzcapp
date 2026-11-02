@@ -6,7 +6,6 @@ application:
       backend: file:///lzcapp/pkg/content/licenses/
     - location: /
       backend: http://planka:1337/
-
 services:
   db:
     image: docker.1ms.run/library/postgres:16-alpine
@@ -25,10 +24,9 @@ services:
       start_period: 20s
     binds:
       - /lzcapp/var/pgdata:/var/lib/postgresql/data
-
   planka:
     # upstream: ghcr.io/plankanban/planka:2.2.1
-    image: docker.1ms.run/ghcr.io/plankanban/planka:2.2.1
+    image: ghcr.1ms.run/plankanban/planka:2.2.1
     depends_on:
       - db
     environment:
@@ -49,7 +47,6 @@ services:
     binds:
       - /lzcapp/var/data:/app/public/user-avatars
       - /lzcapp/var/attachments:/app/private/attachments
-
 usage: |
   Planka 是实时协作看板：建项目、拖卡片、拆子任务、指派成员。
 

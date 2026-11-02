@@ -1,0 +1,73 @@
+application:
+  subdomain: planka
+  multi_instance: false
+  upstreams:
+    - location: /package-licenses/
+      backend: file:///lzcapp/pkg/content/licenses/
+    - location: /
+      backend: http://planka:1337/
+
+services:
+  db:
+    image: docker.1ms.run/library/postgres:16-alpine
+    environment:
+      - POSTGRES_DB=planka
+      - POSTGRES_USER=planka
+      - |-
+        POSTGRES_PASSWORD={{ stable_secret "planka_db_password" | replace "\r" "" | replace "\n" "" }}
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U planka -d planka
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    binds:
+      - /lzcapp/var/pgdata:/var/lib/postgresql/data
+
+  planka:
+    # upstream: ghcr.io/plankanban/planka:2.2.1
+    image: docker.1ms.run/ghcr.io/plankanban/planka:2.2.1
+    depends_on:
+      - db
+    environment:
+      - |-
+        BASE_URL=https://{{ .S.AppDomain }}
+      - |-
+        DATABASE_URL=postgresql://planka:{{ stable_secret "planka_db_password" | replace "\r" "" | replace "\n" "" }}@db:5432/planka
+      - |-
+        SECRET_KEY={{ stable_secret "planka_secret_key" | replace "\r" "" | replace "\n" "" }}
+      - |-
+        DEFAULT_ADMIN_EMAIL={{ .U.admin_email }}
+      - |-
+        DEFAULT_ADMIN_PASSWORD={{ .U.admin_password }}
+      - DEFAULT_ADMIN_NAME=Admin
+      - DEFAULT_ADMIN_USERNAME=admin
+      - TRUST_PROXY=true
+      - TZ=Asia/Shanghai
+    binds:
+      - /lzcapp/var/data:/app/public/user-avatars
+      - /lzcapp/var/attachments:/app/private/attachments
+
+usage: |
+  Planka 是实时协作看板：建项目、拖卡片、拆子任务、指派成员。
+
+  使用方法：
+  1. 打开应用，用你在安装时填写的管理员邮箱和密码登录。
+  2. 新建项目（Project），项目里建看板（Board）和列表（List）。
+  3. 拖卡片在列表间移动，卡片里可以加描述、子任务、附件和指派。
+
+  数据与安全：
+  - 数据库在 PostgreSQL（/lzcapp/var/pgdata），头像在 /lzcapp/var/data，附件在 /lzcapp/var/attachments。
+    卸载应用会一并删除，请定期备份。
+  - 数据库密码与应用密钥由平台稳定密钥生成，每个部署不同，不写成固定值。
+  - 管理员邮箱和密码来自安装参数，不存在内置弱口令。
+  - 应用经懒猫入口鉴权访问。
+
+  说明：
+  - 本应用包含两个容器（Planka + PostgreSQL），启动顺序由依赖关系保证。
+  - 许可说明：本项目使用 PLANKA Community License 1.1，该许可允许分发，但禁止将本软件作为托管服务
+    向第三方提供以获取商业利益。请在个人、家庭内部或组织内部自用范围内使用。
+  - 未配置邮件服务，邀请成员、找回密码等依赖邮件的功能不可用。
+  - 未做真机验证：登录、建项目看板、拖拽卡片、上传附件以及重启后持久化均未在设备上实测。

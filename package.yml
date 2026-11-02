@@ -1,0 +1,18 @@
+package: community.lazycat.app.planka
+name: Planka
+version: 0.0.0
+description: "Real-time kanban board with projects, cards, task lists and team collaboration."
+min_os_version: "1.5.0"
+homepage: https://github.com/plankanban/planka
+author: plankanban
+license: PLANKA Community License
+permissions:
+  required:
+    - net.internet
+locales:
+  zh:
+    name: Planka
+    description: "实时协作看板：建项目、拖卡片、拆子任务、指派成员，适合小团队做轻量项目管理。"
+  en:
+    name: Planka
+    description: "Real-time kanban board with projects, cards, task lists and team collaboration."
